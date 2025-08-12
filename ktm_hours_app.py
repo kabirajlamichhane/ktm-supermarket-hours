@@ -38,28 +38,38 @@ st.markdown("""
         align-items: center;
         gap: 1rem;
         flex-wrap: nowrap;
+        justify-content: space-between;
     }
     .header-label-day {
         min-width: 110px;
         text-align: left;
         padding-left: 5px;
         white-space: nowrap;
+        flex: 1;
     }
-    .header-label-center {
-        min-width: 220px;
+    .header-label-start {
+        flex: 2;
+        text-align: left;
+        white-space: nowrap;
+        padding-left: 10px;
+    }
+    .header-label-break {
+        flex: 1;
         text-align: center;
         white-space: nowrap;
-        padding: 0 10px;
+    }
+    .header-label-end {
+        flex: 2;
+        text-align: right;
+        white-space: nowrap;
+        padding-right: 10px;
     }
     .header-label-right {
         min-width: 130px;
         text-align: right;
         padding-right: 5px;
         white-space: nowrap;
-    }
-    .header-label-center br {
-        display: block;
-        margin-bottom: 4px;
+        flex: 1;
     }
 
     .day-row {
@@ -70,6 +80,7 @@ st.markdown("""
         border-bottom: 1px solid #a3c9a5;
         font-size: 0.95rem;
         flex-wrap: nowrap;
+        justify-content: space-between;
     }
     .day-label {
         min-width: 110px;
@@ -78,6 +89,7 @@ st.markdown("""
         white-space: nowrap;
         text-align: left;
         padding-left: 5px;
+        flex: 1;
     }
     select, input[type=number] {
         border-radius: 5px;
@@ -97,6 +109,7 @@ st.markdown("""
         color: #2E8B57;
         font-size: 1rem;
         padding-right: 5px;
+        flex: 1;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -126,43 +139,64 @@ def calculate_hours(start_time, end_time, break_hrs):
         return max(diff_hours - break_hrs, 0)
     return 0
 
+# Initialize session state defaults to persist inputs on rerun
+for emp in employees:
+    for day in days:
+        for suffix in ['start_hr', 'start_min', 'start_ampm', 'break', 'end_hr', 'end_min', 'end_ampm']:
+            key = f"{emp}_{day}_{suffix}"
+            if key not in st.session_state:
+                if suffix == 'break':
+                    st.session_state[key] = 0.5
+                elif 'hr' in suffix:
+                    st.session_state[key] = 9
+                elif 'min' in suffix:
+                    st.session_state[key] = 0
+                elif 'ampm' in suffix:
+                    st.session_state[key] = 'AM'
+
 work_hours = {emp: {} for emp in employees}
 
 for i, emp in enumerate(employees):
     st.markdown(f'<div class="employee-section employee-{i}">', unsafe_allow_html=True)
     st.subheader(f"👤 {emp}")
 
-    # Header row with aligned labels
+    # Header row with new layout
     st.markdown(f'''
     <div class="header-row">
         <div class="header-label-day">Day</div>
-        <div class="header-label-center">Start Time<br>(Hr:Min AM/PM)</div>
-        <div class="header-label-center">Break Time<br>(hrs)</div>
-        <div class="header-label-center">End Time<br>(Hr:Min AM/PM)</div>
+        <div class="header-label-start">Start Time<br>(Hr:Min AM/PM)</div>
+        <div class="header-label-break">Break Time<br>(hrs)</div>
+        <div class="header-label-end">End Time<br>(Hr:Min AM/PM)</div>
         <div class="header-label-right">Total Work Hours</div>
     </div>
     ''', unsafe_allow_html=True)
 
     for day in days:
-        cols = st.columns([1, 3, 1, 3, 1])
+        cols = st.columns([1, 2, 1, 2, 1])
 
-        # Day label left aligned
         cols[0].markdown(f'<div class="day-label">{day}</div>', unsafe_allow_html=True)
 
-        # Start Time input group centered
-        start_cols = cols[1].columns([1,1,1], gap="small")
-        start_hr = start_cols[0].selectbox("", hours_options, key=f"{emp}_{day}_start_hr", label_visibility="collapsed")
-        start_min = start_cols[1].selectbox("", minutes_options, key=f"{emp}_{day}_start_min", label_visibility="collapsed")
-        start_ampm = start_cols[2].selectbox("", ampm_options, key=f"{emp}_{day}_start_ampm", label_visibility="collapsed")
+        # Start Time inputs (left aligned)
+        start_cols = cols[1].columns([1, 1, 1], gap="small")
+        start_hr_key = f"{emp}_{day}_start_hr"
+        start_min_key = f"{emp}_{day}_start_min"
+        start_ampm_key = f"{emp}_{day}_start_ampm"
+        start_hr = start_cols[0].selectbox("", hours_options, key=start_hr_key, label_visibility="collapsed")
+        start_min = start_cols[1].selectbox("", minutes_options, key=start_min_key, label_visibility="collapsed")
+        start_ampm = start_cols[2].selectbox("", ampm_options, key=start_ampm_key, label_visibility="collapsed")
 
-        # Break time input centered
-        brk = cols[2].number_input("", 0.0, 5.0, 0.5, key=f"{emp}_{day}_break", label_visibility="collapsed")
+        # Break time input (centered)
+        break_key = f"{emp}_{day}_break"
+        brk = cols[2].number_input("", 0.0, 5.0, step=0.5, key=break_key, label_visibility="collapsed")
 
-        # End Time input group centered
-        end_cols = cols[3].columns([1,1,1], gap="small")
-        end_hr = end_cols[0].selectbox("", hours_options, key=f"{emp}_{day}_end_hr", label_visibility="collapsed")
-        end_min = end_cols[1].selectbox("", minutes_options, key=f"{emp}_{day}_end_min", label_visibility="collapsed")
-        end_ampm = end_cols[2].selectbox("", ampm_options, key=f"{emp}_{day}_end_ampm", label_visibility="collapsed")
+        # End Time inputs (right aligned)
+        end_cols = cols[3].columns([1, 1, 1], gap="small")
+        end_hr_key = f"{emp}_{day}_end_hr"
+        end_min_key = f"{emp}_{day}_end_min"
+        end_ampm_key = f"{emp}_{day}_end_ampm"
+        end_hr = end_cols[0].selectbox("", hours_options, key=end_hr_key, label_visibility="collapsed")
+        end_min = end_cols[1].selectbox("", minutes_options, key=end_min_key, label_visibility="collapsed")
+        end_ampm = end_cols[2].selectbox("", ampm_options, key=end_ampm_key, label_visibility="collapsed")
 
         # Calculate worked hours
         start_time_obj = to_time_obj(start_hr, start_min, start_ampm)
@@ -170,7 +204,7 @@ for i, emp in enumerate(employees):
         worked_hours = calculate_hours(start_time_obj, end_time_obj, brk)
         work_hours[emp][day] = worked_hours
 
-        # Total worked hours aligned right with padding
+        # Display total hours (right aligned)
         cols[4].markdown(f'<div class="hours-display">{worked_hours:.2f} hrs</div>', unsafe_allow_html=True)
 
     st.markdown('</div>', unsafe_allow_html=True)
