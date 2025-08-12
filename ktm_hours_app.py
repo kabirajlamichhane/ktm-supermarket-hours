@@ -3,7 +3,7 @@ from datetime import datetime, time
 import pandas as pd
 
 st.set_page_config(
-    page_title="KTM Supermarket - Working Hours (Compact Input)",
+    page_title="KTM Supermarket - Working Hours (Compact Inputs)",
     page_icon="🛒",
     layout="wide"
 )
@@ -42,23 +42,27 @@ for emp in employees:
     with st.expander(f"Enter {emp}'s working hours", expanded=True):
         for day in days:
             st.markdown(f"**{day}**")
-            cols = st.columns([1, 1, 1, 1, 1, 0.8])
+            # Columns: Day label, Start time group, End time group, Break input
+            cols = st.columns([1.5, 3, 3, 1.2])
 
-            # Start time grouped inputs
-            start_hr = cols[0].selectbox("Hr", hours_options, key=f"{emp}_{day}_start_hr", label_visibility="collapsed")
-            start_min = cols[1].selectbox("Min", minutes_options, key=f"{emp}_{day}_start_min", label_visibility="collapsed")
-            start_ampm = cols[2].selectbox("AM/PM", ampm_options, key=f"{emp}_{day}_start_ampm", label_visibility="collapsed")
+            # Start time inputs compact group (hour, min, am/pm)
+            start_cols = cols[1].columns([1,1,1])
+            start_hr = start_cols[0].selectbox("", hours_options, key=f"{emp}_{day}_start_hr", label_visibility="collapsed")
+            start_min = start_cols[1].selectbox("", minutes_options, key=f"{emp}_{day}_start_min", label_visibility="collapsed")
+            start_ampm = start_cols[2].selectbox("", ampm_options, key=f"{emp}_{day}_start_ampm", label_visibility="collapsed")
 
-            # End time grouped inputs
-            end_hr = cols[3].selectbox("Hr", hours_options, key=f"{emp}_{day}_end_hr", label_visibility="collapsed")
-            end_min = cols[4].selectbox("Min", minutes_options, key=f"{emp}_{day}_end_min", label_visibility="collapsed")
-            end_ampm = cols[5].selectbox("AM/PM", ampm_options, key=f"{emp}_{day}_end_ampm", label_visibility="collapsed")
+            # End time inputs compact group (hour, min, am/pm)
+            end_cols = cols[2].columns([1,1,1])
+            end_hr = end_cols[0].selectbox("", hours_options, key=f"{emp}_{day}_end_hr", label_visibility="collapsed")
+            end_min = end_cols[1].selectbox("", minutes_options, key=f"{emp}_{day}_end_min", label_visibility="collapsed")
+            end_ampm = end_cols[2].selectbox("", ampm_options, key=f"{emp}_{day}_end_ampm", label_visibility="collapsed")
 
-            # Break time below inputs for clarity and smaller footprint
-            brk = st.number_input(f"{day} Break (hrs)", 0.0, 5.0, 0.5, key=f"{emp}_{day}_break", label_visibility="collapsed")
+            # Break input
+            brk = cols[3].number_input("", 0.0, 5.0, 0.5, key=f"{emp}_{day}_break", label_visibility="collapsed")
 
             start_time_obj = to_time_obj(start_hr, start_min, start_ampm)
             end_time_obj = to_time_obj(end_hr, end_min, end_ampm)
+
             work_hours[emp][day] = calculate_hours(start_time_obj, end_time_obj, brk)
             break_hours[emp][day] = brk
 
