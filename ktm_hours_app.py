@@ -8,7 +8,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# CSS for neat styling
+# CSS for styling and alternating employee colors
 st.markdown("""
 <style>
     .title {
@@ -19,18 +19,20 @@ st.markdown("""
         margin-bottom: 1rem;
     }
     .employee-section {
-        background-color: #f5f9f8;
         border-radius: 12px;
         padding: 1rem 1.5rem;
         margin-bottom: 1.5rem;
         box-shadow: 0 4px 8px rgba(46,139,87,0.15);
     }
+    .employee-0 { background-color: #e6f2e6; }  /* light green */
+    .employee-1 { background-color: #d9ead3; }  /* lighter green */
+    .employee-2 { background-color: #cde6d0; }  /* even lighter */
     .day-row {
         display: flex;
         align-items: center;
         gap: 1rem;
         padding: 6px 0;
-        border-bottom: 1px solid #cde6d0;
+        border-bottom: 1px solid #a3c9a5;
         font-size: 0.95rem;
         flex-wrap: wrap;
     }
@@ -57,10 +59,11 @@ st.markdown("""
         width: 70px;
     }
     .hours-display {
-        min-width: 90px;
+        min-width: 110px;
         text-align: center;
-        font-weight: 600;
+        font-weight: 700;
         color: #2E8B57;
+        font-size: 1rem;
     }
     .header-row {
         font-weight: 700;
@@ -71,19 +74,10 @@ st.markdown("""
         border-bottom: 2px solid #2E8B57;
         flex-wrap: wrap;
     }
-    .header-label {
-        min-width: 100px;
-    }
-    .header-time {
-        min-width: 230px;
-    }
-    .header-break {
-        min-width: 70px;
-    }
-    .header-hours {
-        min-width: 90px;
-        text-align: center;
-    }
+    .header-label { min-width: 100px; }
+    .header-time { min-width: 230px; }
+    .header-break { min-width: 70px; }
+    .header-hours { min-width: 110px; text-align: center; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -114,8 +108,8 @@ def calculate_hours(start_time, end_time, break_hrs):
 
 work_hours = {emp: {} for emp in employees}
 
-for emp in employees:
-    st.markdown(f'<div class="employee-section">', unsafe_allow_html=True)
+for i, emp in enumerate(employees):
+    st.markdown(f'<div class="employee-section employee-{i}">', unsafe_allow_html=True)
     st.subheader(f"👤 {emp}")
 
     # Header labels for days section
@@ -125,7 +119,7 @@ for emp in employees:
         <div class="header-time">Start Time (Hr:Min AM/PM)</div>
         <div class="header-break">Break (hrs)</div>
         <div class="header-time">End Time (Hr:Min AM/PM)</div>
-        <div class="header-hours">Hours Worked</div>
+        <div class="header-hours">Total Worked Hours</div>
     </div>
     ''', unsafe_allow_html=True)
 
@@ -161,7 +155,7 @@ for emp in employees:
 
     st.markdown('</div>', unsafe_allow_html=True)
 
-# Summary table
+# Weekly summary table
 st.markdown("<hr>")
 st.markdown("## 📊 Weekly Summary Table")
 
