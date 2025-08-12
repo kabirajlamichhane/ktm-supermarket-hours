@@ -4,7 +4,7 @@ import pandas as pd
 
 # Page config
 st.set_page_config(
-    page_title="KTM Supermarket - Working Hours Tracker",
+    page_title="KTM Supermarket - Working Hours Calculation",
     page_icon="🛒",
     layout="wide"
 )
@@ -89,7 +89,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown('<h1 class="title">🛒 KTM Supermarket - Working Hours Tracker</h1>', unsafe_allow_html=True)
+st.markdown('<h1 class="title">🛒 KTM Supermarket - Working Hours Calculation</h1>', unsafe_allow_html=True)
 
 employees = ["Kabiraj Lamichhane", "Jenish Kandel", "Goma Adhikari"]
 days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
