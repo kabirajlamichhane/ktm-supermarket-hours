@@ -9,11 +9,15 @@ st.set_page_config(
     layout="wide"
 )
 
-DATA_PATH = "/mnt/data/work_hours_data.csv"
+# Create data directory if not exists
+DATA_DIR = "data"
+if not os.path.exists(DATA_DIR):
+    os.makedirs(DATA_DIR)
+
+DATA_PATH = os.path.join(DATA_DIR, "work_hours_data.csv")
 
 st.markdown("""
 <style>
-    /* ... Keep your CSS from before unchanged ... */
     .title {
         text-align: center;
         color: #2E8B57;
@@ -149,7 +153,6 @@ def load_saved_data():
         df = pd.read_csv(DATA_PATH)
         return df
     else:
-        # Create empty dataframe with correct columns if no file
         cols = ["Employee", "Day", "Start_hr", "Start_min", "Start_ampm",
                 "Break", "End_hr", "End_min", "End_ampm"]
         return pd.DataFrame(columns=cols)
@@ -167,7 +170,6 @@ for emp in employees:
         for suffix in ['start_hr', 'start_min', 'start_ampm', 'break', 'end_hr', 'end_min', 'end_ampm']:
             key = f"{emp}_{day}_{suffix}"
             if key not in st.session_state:
-                # Try loading from saved data
                 saved_val = None
                 if not saved_df.empty:
                     match = saved_df[
@@ -186,7 +188,6 @@ for emp in employees:
                         }
                         saved_val = match.iloc[0][col_name_map[suffix]]
                 if saved_val is not None and not pd.isna(saved_val):
-                    # Cast appropriately
                     if suffix in ['start_hr', 'start_min', 'end_hr', 'end_min']:
                         st.session_state[key] = int(saved_val)
                     elif suffix == 'break':
@@ -194,7 +195,6 @@ for emp in employees:
                     else:
                         st.session_state[key] = saved_val
                 else:
-                    # Default values
                     if suffix == 'break':
                         st.session_state[key] = 0.5
                     elif 'hr' in suffix:
@@ -225,7 +225,6 @@ for i, emp in enumerate(employees):
 
         cols[0].markdown(f'<div class="day-label">{day}</div>', unsafe_allow_html=True)
 
-        # Start Time inputs (left aligned)
         start_cols = cols[1].columns([1, 1, 1], gap="small")
         start_hr_key = f"{emp}_{day}_start_hr"
         start_min_key = f"{emp}_{day}_start_min"
@@ -234,11 +233,9 @@ for i, emp in enumerate(employees):
         start_min = start_cols[1].selectbox("", minutes_options, key=start_min_key, label_visibility="collapsed", index=minutes_options.index(st.session_state[start_min_key]))
         start_ampm = start_cols[2].selectbox("", ampm_options, key=start_ampm_key, label_visibility="collapsed", index=ampm_options.index(st.session_state[start_ampm_key]))
 
-        # Break time input (centered)
         break_key = f"{emp}_{day}_break"
         brk = cols[2].number_input("", 0.0, 5.0, step=0.5, key=break_key, label_visibility="collapsed", value=st.session_state[break_key])
 
-        # End Time inputs (right aligned)
         end_cols = cols[3].columns([1, 1, 1], gap="small")
         end_hr_key = f"{emp}_{day}_end_hr"
         end_min_key = f"{emp}_{day}_end_min"
@@ -247,20 +244,16 @@ for i, emp in enumerate(employees):
         end_min = end_cols[1].selectbox("", minutes_options, key=end_min_key, label_visibility="collapsed", index=minutes_options.index(st.session_state[end_min_key]))
         end_ampm = end_cols[2].selectbox("", ampm_options, key=end_ampm_key, label_visibility="collapsed", index=ampm_options.index(st.session_state[end_ampm_key]))
 
-        # Calculate worked hours
         start_time_obj = to_time_obj(start_hr, start_min, start_ampm)
         end_time_obj = to_time_obj(end_hr, end_min, end_ampm)
         worked_hours = calculate_hours(start_time_obj, end_time_obj, brk)
         work_hours[emp][day] = worked_hours
 
-        # Display total hours (right aligned)
         cols[4].markdown(f'<div class="hours-display">{worked_hours:.2f} hrs</div>', unsafe_allow_html=True)
 
     st.markdown('</div>', unsafe_allow_html=True)
 
-# Save button to store current inputs
 if st.button("💾 Save Working Hours"):
-    # Gather all input data into list of dicts
     save_list = []
     for emp in employees:
         for day in days:
@@ -278,7 +271,6 @@ if st.button("💾 Save Working Hours"):
     save_data_to_csv(save_list)
     st.success("💾 Working hours saved successfully!")
 
-# Weekly summary table from saved data (not live inputs)
 st.markdown("<hr>")
 st.markdown("## 📊 Weekly Summary Table (Saved Data)")
 
