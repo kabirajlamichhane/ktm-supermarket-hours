@@ -8,7 +8,6 @@ st.set_page_config(
     layout="wide"
 )
 
-# CSS for styling and nice header spacing
 st.markdown("""
 <style>
     .title {
@@ -30,44 +29,39 @@ st.markdown("""
 
     .header-row {
         display: flex;
-        padding-bottom: 6px;
+        padding-bottom: 8px;
         border-bottom: 2px solid #2E8B57;
         font-weight: 700;
         color: #2E8B57;
         font-size: 1.1rem;
-        margin-bottom: 4px;
-        align-items: flex-end;
+        margin-bottom: 8px;
+        align-items: center;
         gap: 1rem;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
     }
-    .header-label { min-width: 100px; }
-    .header-start {
-        min-width: 230px;
-        text-align: center;
-        padding-bottom: 6px;
-        border-bottom: 3px solid #2E8B57;
-        white-space: nowrap;
-    }
-    .header-break {
-        min-width: 100px;
-        text-align: center;
-        padding-bottom: 6px;
-        border-bottom: 3px solid #2E8B57;
-        white-space: nowrap;
-    }
-    .header-end {
-        min-width: 230px;
-        text-align: center;
-        padding-bottom: 6px;
-        border-bottom: 3px solid #2E8B57;
-        white-space: nowrap;
-    }
-    .header-hours {
+    .header-label-day {
         min-width: 110px;
-        text-align: center;
-        padding-bottom: 6px;
-        border-bottom: 3px solid #2E8B57;
+        text-align: left;
+        padding-left: 5px;
+        white-space: nowrap;
     }
+    .header-label-center {
+        min-width: 220px;
+        text-align: center;
+        white-space: nowrap;
+        padding: 0 10px;
+    }
+    .header-label-right {
+        min-width: 130px;
+        text-align: right;
+        padding-right: 5px;
+        white-space: nowrap;
+    }
+    .header-label-center br {
+        display: block;
+        margin-bottom: 4px;
+    }
+
     .day-row {
         display: flex;
         align-items: center;
@@ -75,13 +69,15 @@ st.markdown("""
         padding: 6px 0;
         border-bottom: 1px solid #a3c9a5;
         font-size: 0.95rem;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
     }
     .day-label {
-        min-width: 100px;
+        min-width: 110px;
         font-weight: 600;
         color: #3a7d44;
         white-space: nowrap;
+        text-align: left;
+        padding-left: 5px;
     }
     select, input[type=number] {
         border-radius: 5px;
@@ -95,11 +91,12 @@ st.markdown("""
         width: 70px;
     }
     .hours-display {
-        min-width: 110px;
-        text-align: center;
+        min-width: 130px;
+        text-align: right;
         font-weight: 700;
         color: #2E8B57;
         font-size: 1rem;
+        padding-right: 5px;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -135,33 +132,33 @@ for i, emp in enumerate(employees):
     st.markdown(f'<div class="employee-section employee-{i}">', unsafe_allow_html=True)
     st.subheader(f"👤 {emp}")
 
-    # Header labels with line breaks for neatness
-    st.markdown('''
+    # Header row with aligned labels
+    st.markdown(f'''
     <div class="header-row">
-        <div class="header-label">Day</div>
-        <div class="header-start">Start Time<br>(Hr:Min AM/PM)</div>
-        <div class="header-break">Break Time<br>(hrs)</div>
-        <div class="header-end">End Time<br>(Hr:Min AM/PM)</div>
-        <div class="header-hours">Total Work Hours</div>
+        <div class="header-label-day">Day</div>
+        <div class="header-label-center">Start Time<br>(Hr:Min AM/PM)</div>
+        <div class="header-label-center">Break Time<br>(hrs)</div>
+        <div class="header-label-center">End Time<br>(Hr:Min AM/PM)</div>
+        <div class="header-label-right">Total Work Hours</div>
     </div>
     ''', unsafe_allow_html=True)
 
     for day in days:
         cols = st.columns([1, 3, 1, 3, 1])
 
-        # Day label
+        # Day label left aligned
         cols[0].markdown(f'<div class="day-label">{day}</div>', unsafe_allow_html=True)
 
-        # Start Time input group
+        # Start Time input group centered
         start_cols = cols[1].columns([1,1,1], gap="small")
         start_hr = start_cols[0].selectbox("", hours_options, key=f"{emp}_{day}_start_hr", label_visibility="collapsed")
         start_min = start_cols[1].selectbox("", minutes_options, key=f"{emp}_{day}_start_min", label_visibility="collapsed")
         start_ampm = start_cols[2].selectbox("", ampm_options, key=f"{emp}_{day}_start_ampm", label_visibility="collapsed")
 
-        # Break input
+        # Break time input centered
         brk = cols[2].number_input("", 0.0, 5.0, 0.5, key=f"{emp}_{day}_break", label_visibility="collapsed")
 
-        # End Time input group
+        # End Time input group centered
         end_cols = cols[3].columns([1,1,1], gap="small")
         end_hr = end_cols[0].selectbox("", hours_options, key=f"{emp}_{day}_end_hr", label_visibility="collapsed")
         end_min = end_cols[1].selectbox("", minutes_options, key=f"{emp}_{day}_end_min", label_visibility="collapsed")
@@ -173,7 +170,7 @@ for i, emp in enumerate(employees):
         worked_hours = calculate_hours(start_time_obj, end_time_obj, brk)
         work_hours[emp][day] = worked_hours
 
-        # Display worked hours
+        # Total worked hours aligned right with padding
         cols[4].markdown(f'<div class="hours-display">{worked_hours:.2f} hrs</div>', unsafe_allow_html=True)
 
     st.markdown('</div>', unsafe_allow_html=True)
