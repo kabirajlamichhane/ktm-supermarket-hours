@@ -8,7 +8,6 @@ st.set_page_config(
     layout="wide"
 )
 
-# CSS for styling and alternating employee colors
 st.markdown("""
 <style>
     .title {
@@ -41,12 +40,6 @@ st.markdown("""
         font-weight: 600;
         color: #3a7d44;
     }
-    .time-group {
-        display: flex;
-        gap: 6px;
-        align-items: center;
-        min-width: 230px;
-    }
     select, input[type=number] {
         border-radius: 5px;
         border: 1px solid #ccc;
@@ -75,8 +68,9 @@ st.markdown("""
         flex-wrap: wrap;
     }
     .header-label { min-width: 100px; }
-    .header-time { min-width: 230px; }
+    .header-start { min-width: 230px; }
     .header-break { min-width: 70px; }
+    .header-end { min-width: 230px; }
     .header-hours { min-width: 110px; text-align: center; }
 </style>
 """, unsafe_allow_html=True)
@@ -116,10 +110,10 @@ for i, emp in enumerate(employees):
     st.markdown('''
     <div class="header-row">
         <div class="header-label">Day</div>
-        <div class="header-time">Start Time (Hr:Min AM/PM)</div>
-        <div class="header-break">Break (hrs)</div>
-        <div class="header-time">End Time (Hr:Min AM/PM)</div>
-        <div class="header-hours">Total Worked Hours</div>
+        <div class="header-start">Start Time (Hr:Min AM/PM)</div>
+        <div class="header-break">Break Time (hrs)</div>
+        <div class="header-end">End Time (Hr:Min AM/PM)</div>
+        <div class="header-hours">Total Work Hours</div>
     </div>
     ''', unsafe_allow_html=True)
 
