@@ -50,4 +50,25 @@ st.markdown("## 📊 Weekly Summary Table")
 # Prepare data for table
 data = []
 for emp in employees:
-    row = {"Emplo
+    row = {"Employee": emp}
+    total_weekly = 0
+    for day in days:
+        row[day] = f"{work_hours[emp][day]:.2f}"
+        total_weekly += work_hours[emp][day]
+    row["Weekly Total"] = f"{total_weekly:.2f}"
+    data.append(row)
+
+df = pd.DataFrame(data)
+
+# Display table with nice styling
+st.dataframe(
+    df.style.set_properties(**{
+        'background-color': '#f0f8ff',
+        'color': 'black',
+        'border-color': 'black',
+        'text-align': 'center'
+    }).set_table_styles([
+        {'selector': 'th', 'props': [('background-color', '#2E8B57'), ('color', 'white'), ('font-weight', 'bold')]}
+    ]),
+    use_container_width=True
+)
