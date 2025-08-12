@@ -8,6 +8,7 @@ st.set_page_config(
     layout="wide"
 )
 
+# CSS for styling and nice header spacing
 st.markdown("""
 <style>
     .title {
@@ -23,9 +24,50 @@ st.markdown("""
         margin-bottom: 1.5rem;
         box-shadow: 0 4px 8px rgba(46,139,87,0.15);
     }
-    .employee-0 { background-color: #e6f2e6; }  /* light green */
-    .employee-1 { background-color: #d9ead3; }  /* lighter green */
-    .employee-2 { background-color: #cde6d0; }  /* even lighter */
+    .employee-0 { background-color: #e6f2e6; }
+    .employee-1 { background-color: #d9ead3; }
+    .employee-2 { background-color: #cde6d0; }
+
+    .header-row {
+        display: flex;
+        padding-bottom: 6px;
+        border-bottom: 2px solid #2E8B57;
+        font-weight: 700;
+        color: #2E8B57;
+        font-size: 1.1rem;
+        margin-bottom: 4px;
+        align-items: flex-end;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    .header-label { min-width: 100px; }
+    .header-start {
+        min-width: 230px;
+        text-align: center;
+        padding-bottom: 6px;
+        border-bottom: 3px solid #2E8B57;
+        white-space: nowrap;
+    }
+    .header-break {
+        min-width: 100px;
+        text-align: center;
+        padding-bottom: 6px;
+        border-bottom: 3px solid #2E8B57;
+        white-space: nowrap;
+    }
+    .header-end {
+        min-width: 230px;
+        text-align: center;
+        padding-bottom: 6px;
+        border-bottom: 3px solid #2E8B57;
+        white-space: nowrap;
+    }
+    .header-hours {
+        min-width: 110px;
+        text-align: center;
+        padding-bottom: 6px;
+        border-bottom: 3px solid #2E8B57;
+    }
     .day-row {
         display: flex;
         align-items: center;
@@ -39,6 +81,7 @@ st.markdown("""
         min-width: 100px;
         font-weight: 600;
         color: #3a7d44;
+        white-space: nowrap;
     }
     select, input[type=number] {
         border-radius: 5px;
@@ -58,20 +101,6 @@ st.markdown("""
         color: #2E8B57;
         font-size: 1rem;
     }
-    .header-row {
-        font-weight: 700;
-        color: #2E8B57;
-        display: flex;
-        gap: 1rem;
-        padding-bottom: 6px;
-        border-bottom: 2px solid #2E8B57;
-        flex-wrap: wrap;
-    }
-    .header-label { min-width: 100px; }
-    .header-start { min-width: 230px; }
-    .header-break { min-width: 70px; }
-    .header-end { min-width: 230px; }
-    .header-hours { min-width: 110px; text-align: center; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -106,13 +135,13 @@ for i, emp in enumerate(employees):
     st.markdown(f'<div class="employee-section employee-{i}">', unsafe_allow_html=True)
     st.subheader(f"👤 {emp}")
 
-    # Header labels for days section
+    # Header labels with line breaks for neatness
     st.markdown('''
     <div class="header-row">
         <div class="header-label">Day</div>
-        <div class="header-start">Start Time (Hr:Min AM/PM)</div>
-        <div class="header-break">Break Time (hrs)</div>
-        <div class="header-end">End Time (Hr:Min AM/PM)</div>
+        <div class="header-start">Start Time<br>(Hr:Min AM/PM)</div>
+        <div class="header-break">Break Time<br>(hrs)</div>
+        <div class="header-end">End Time<br>(Hr:Min AM/PM)</div>
         <div class="header-hours">Total Work Hours</div>
     </div>
     ''', unsafe_allow_html=True)
