@@ -351,5 +351,6 @@ else:
 # Reset button
 st.markdown("<hr>")
 if st.button("🔄 Reset All Data"):
-    if st.confirm("Are you sure you want to delete all saved data? This cannot be undone."):
+    confirm_reset = st.checkbox("⚠️ Are you sure you want to delete all saved data? This cannot be undone.", key="confirm_reset")
+    if confirm_reset:
         reset_all_data()
