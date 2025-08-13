@@ -3,6 +3,19 @@ from datetime import datetime, time
 import pandas as pd
 import os
 
+names = ["Kabiraj"]
+usernames = ["kabiraj"]
+passwords = ["Kabi&aus@2024"]  # Use hashed passwords
+
+authenticator = stauth.Authenticate(names, usernames, passwords, "ktm_session", "abcdef")
+name, authentication_status, username = authenticator.login("Login", "main")
+
+if authentication_status:
+    st.write(f"Welcome {name}")
+    st.markdown("[🔗 Access GitHub](https://github.com/your-repo)")
+else:
+    st.warning("Please login to access the app.")
+
 st.set_page_config(
     page_title="KTM Supermarket - Daily Working Hours Tracker",
     page_icon="🛒",
