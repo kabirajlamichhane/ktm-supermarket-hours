@@ -226,7 +226,7 @@ if st.button("🔄 Reset All Data"):
 # --- GitHub link with secret key ---
 st.markdown("<hr>")
 secret_key = st.text_input("Enter secret key to access GitHub link", type="password")
-if secret_key == "MY_SECRET_KEY":  # Change to your secret
+if secret_key == "Kabi&aus@2024":  # Change to your secret
     st.markdown("[🔗 Access GitHub](https://github.com/kabirajlamichhane/ktm-supermarket-hours/edit/main/ktm_hours_app.py)")
 else:
     if secret_key:
