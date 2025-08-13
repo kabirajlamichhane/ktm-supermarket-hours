@@ -41,19 +41,18 @@ def calculate_hours(start_time, end_time, break_hrs):
 
 def load_saved_data():
     if os.path.exists(DATA_PATH):
-        return pd.read_csv(DATA_PATH, parse_dates=["Date"])
+        return pd.read_csv(DATA_PATH)
     else:
-        cols = ["Employee", "Day", "Date", "Start_hr", "Start_min", "Start_ampm",
+        cols = ["Employee", "Day", "Start_hr", "Start_min", "Start_ampm",
                 "Break", "End_hr", "End_min", "End_ampm"]
         return pd.DataFrame(columns=cols)
 
-def save_day(emp, day, selected_date):
+def save_day(emp, day):
     df = load_saved_data()
-    df = df[~((df["Employee"] == emp) & (df["Day"] == day) & (df["Date"] == pd.to_datetime(selected_date)))]
+    df = df[~((df["Employee"] == emp) & (df["Day"] == day))]
     df = pd.concat([df, pd.DataFrame([{
         "Employee": emp,
         "Day": day,
-        "Date": selected_date,
         "Start_hr": st.session_state[f"{emp}_{day}_start_hr"],
         "Start_min": st.session_state[f"{emp}_{day}_start_min"],
         "Start_ampm": st.session_state[f"{emp}_{day}_start_ampm"],
@@ -69,7 +68,7 @@ def save_day(emp, day, selected_date):
 def reset_all_data():
     if os.path.exists(DATA_PATH):
         os.remove(DATA_PATH)
-    st.session_state["saved_df"] = pd.DataFrame(columns=["Employee", "Day", "Date", "Start_hr", "Start_min", "Start_ampm",
+    st.session_state["saved_df"] = pd.DataFrame(columns=["Employee", "Day", "Start_hr", "Start_min", "Start_ampm",
                                                          "Break", "End_hr", "End_min", "End_ampm"])
     for emp in employees:
         for day in days:
@@ -145,11 +144,16 @@ input[type=number]{width:70px;}
 
 st.markdown('<h1 class="title">🛒 KTM Supermarket - Daily Working Hours Tracker</h1>', unsafe_allow_html=True)
 
-# --- Date selection for each day entry ---
-for emp in employees:
-    st.markdown(f'<div class="employee-section employee-{employees.index(emp)}">', unsafe_allow_html=True)
-    st.subheader(f"👤 {emp}")
+# --- From/To Date selector for weekly summary ---
+st.markdown("## 📅 Select Date Range for Weekly Summary")
+col1, col2 = st.columns(2)
+from_date = col1.date_input("From Date", value=date.today() - timedelta(days=7))
+to_date = col2.date_input("To Date", value=date.today())
 
+# --- Display employees ---
+for i, emp in enumerate(employees):
+    st.markdown(f'<div class="employee-section employee-{i}">', unsafe_allow_html=True)
+    st.subheader(f"👤 {emp}")
     st.markdown("""
     <div class="header-row">
         <div class="header-label-day">Day</div>
@@ -177,19 +181,13 @@ for emp in employees:
         end_min = end_cols[1].selectbox("", minutes_options, key=f"{emp}_{day}_end_min", label_visibility="collapsed", disabled=not edit_mode)
         end_ampm = end_cols[2].selectbox("", ampm_options, key=f"{emp}_{day}_end_ampm", label_visibility="collapsed", disabled=not edit_mode)
 
-        # Date picker per day
-        date_key = f"{emp}_{day}_date"
-        if date_key not in st.session_state:
-            st.session_state[date_key] = date.today()
-        selected_date = cols[4].date_input("Select Date", value=st.session_state[date_key], key=date_key)
-
         worked_hours = calculate_hours(to_time_obj(start_hr,start_min,start_ampm), to_time_obj(end_hr,end_min,end_ampm), brk)
 
         with cols[4]:
             st.markdown(f'<div class="hours-display">{worked_hours:.2f} hrs</div>', unsafe_allow_html=True)
             if edit_mode:
                 if st.button("💾 Save", key=f"{emp}_{day}_savebtn"):
-                    save_day(emp, day, selected_date)
+                    save_day(emp, day)
                     st.session_state[f"{emp}_{day}_edit_mode"] = False
             else:
                 if st.button("✏️ Edit", key=f"{emp}_{day}_editbtn"):
@@ -197,29 +195,22 @@ for emp in employees:
 
     st.markdown('</div>', unsafe_allow_html=True)
 
-# --- Weekly summary with From/To date ---
+# --- Weekly Summary ---
 st.markdown("<hr>")
-st.subheader("📅 Filter Weekly Summary by Date")
-col1, col2 = st.columns(2)
-from_date = col1.date_input("From Date", value=date.today() - timedelta(days=7))
-to_date = col2.date_input("To Date", value=date.today())
-
 st.markdown("## 📊 Weekly Summary Table")
 df = st.session_state["saved_df"]
 
 if df.empty:
     st.info("No saved data yet.")
 else:
-    # Filter by date range
-    df_filtered = df[(df["Date"] >= pd.to_datetime(from_date)) & (df["Date"] <= pd.to_datetime(to_date))]
-
+    # Use the date range to filter rows (optional if you store dates, else just keep all)
     summary_data = []
     for emp in employees:
         row = {"Employee": emp}
         total_hours = 0
         for day in days:
-            match = df_filtered[(df_filtered["Employee"]==emp) & (df_filtered["Day"]==day)]
-            hrs = 0
+            match = df[(df["Employee"]==emp) & (df["Day"]==day)]
+            hrs=0
             if not match.empty:
                 for idx in range(len(match)):
                     hrs += calculate_hours(
