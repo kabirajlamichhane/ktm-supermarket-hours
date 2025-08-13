@@ -16,6 +16,7 @@ if not os.path.exists(DATA_DIR):
 
 DATA_PATH = os.path.join(DATA_DIR, "work_hours_data.csv")
 
+# --- CSS Styling (Responsive) ---
 st.markdown("""
 <style>
     .title {
@@ -119,6 +120,27 @@ st.markdown("""
         padding-right: 5px;
         flex: 1;
     }
+    @media (max-width: 768px) {
+        .header-row, .day-row {
+            flex-wrap: wrap;
+            font-size: 0.85rem;
+        }
+        select, input[type=number] {
+            width: 60px !important;
+            font-size: 0.85rem;
+        }
+        .hours-display {
+            text-align: left;
+            min-width: auto;
+            padding-left: 5px;
+        }
+    }
+    @media (max-width: 480px) {
+        .header-row div, .day-row div {
+            flex: 100%;
+            text-align: left !important;
+        }
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -157,36 +179,51 @@ def load_saved_data():
                 "Break", "End_hr", "End_min", "End_ampm"]
         return pd.DataFrame(columns=cols)
 
-# Save current data to CSV
-def save_data_to_csv(data):
-    df = pd.DataFrame(data)
+# Save/Update data for a specific day
+def save_day(emp, day):
+    df = load_saved_data()
+    df = df[~((df["Employee"] == emp) & (df["Day"] == day))]
+    df = pd.concat([df, pd.DataFrame([{
+        "Employee": emp,
+        "Day": day,
+        "Start_hr": st.session_state[f"{emp}_{day}_start_hr"],
+        "Start_min": st.session_state[f"{emp}_{day}_start_min"],
+        "Start_ampm": st.session_state[f"{emp}_{day}_start_ampm"],
+        "Break": st.session_state[f"{emp}_{day}_break"],
+        "End_hr": st.session_state[f"{emp}_{day}_end_hr"],
+        "End_min": st.session_state[f"{emp}_{day}_end_min"],
+        "End_ampm": st.session_state[f"{emp}_{day}_end_ampm"]
+    }])], ignore_index=True)
     df.to_csv(DATA_PATH, index=False)
+    st.session_state["saved_df"] = df
+    st.success(f"✅ {emp} - {day} saved!")
 
-saved_df = load_saved_data()
+# Initialize saved data
+if "saved_df" not in st.session_state:
+    st.session_state["saved_df"] = load_saved_data()
 
-# Initialize session state for inputs from saved data or defaults
+# Initialize session state for inputs
 for emp in employees:
     for day in days:
         for suffix in ['start_hr', 'start_min', 'start_ampm', 'break', 'end_hr', 'end_min', 'end_ampm']:
             key = f"{emp}_{day}_{suffix}"
             if key not in st.session_state:
                 saved_val = None
-                if not saved_df.empty:
-                    match = saved_df[
-                        (saved_df["Employee"] == emp) &
-                        (saved_df["Day"] == day)
-                    ]
-                    if not match.empty:
-                        col_name_map = {
-                            'start_hr': 'Start_hr',
-                            'start_min': 'Start_min',
-                            'start_ampm': 'Start_ampm',
-                            'break': 'Break',
-                            'end_hr': 'End_hr',
-                            'end_min': 'End_min',
-                            'end_ampm': 'End_ampm'
-                        }
-                        saved_val = match.iloc[0][col_name_map[suffix]]
+                match = st.session_state["saved_df"][
+                    (st.session_state["saved_df"]["Employee"] == emp) &
+                    (st.session_state["saved_df"]["Day"] == day)
+                ]
+                if not match.empty:
+                    col_name_map = {
+                        'start_hr': 'Start_hr',
+                        'start_min': 'Start_min',
+                        'start_ampm': 'Start_ampm',
+                        'break': 'Break',
+                        'end_hr': 'End_hr',
+                        'end_min': 'End_min',
+                        'end_ampm': 'End_ampm'
+                    }
+                    saved_val = match.iloc[0][col_name_map[suffix]]
                 if saved_val is not None and not pd.isna(saved_val):
                     if suffix in ['start_hr', 'start_min', 'end_hr', 'end_min']:
                         st.session_state[key] = int(saved_val)
@@ -204,8 +241,10 @@ for emp in employees:
                     elif 'ampm' in suffix:
                         st.session_state[key] = 'AM'
 
+# Work hours storage
 work_hours = {emp: {} for emp in employees}
 
+# Employee sections
 for i, emp in enumerate(employees):
     st.markdown(f'<div class="employee-section employee-{i}">', unsafe_allow_html=True)
     st.subheader(f"👤 {emp}")
@@ -216,7 +255,7 @@ for i, emp in enumerate(employees):
         <div class="header-label-start">Start Time<br>(Hr:Min AM/PM)</div>
         <div class="header-label-break">Break Time<br>(hrs)</div>
         <div class="header-label-end">End Time<br>(Hr:Min AM/PM)</div>
-        <div class="header-label-right">Total Work Hours</div>
+        <div class="header-label-right">Total Hours / Save</div>
     </div>
     ''', unsafe_allow_html=True)
 
@@ -226,78 +265,47 @@ for i, emp in enumerate(employees):
         cols[0].markdown(f'<div class="day-label">{day}</div>', unsafe_allow_html=True)
 
         start_cols = cols[1].columns([1, 1, 1], gap="small")
-        start_hr_key = f"{emp}_{day}_start_hr"
-        start_min_key = f"{emp}_{day}_start_min"
-        start_ampm_key = f"{emp}_{day}_start_ampm"
-        start_hr = start_cols[0].selectbox("", hours_options, key=start_hr_key, label_visibility="collapsed", index=hours_options.index(st.session_state[start_hr_key]))
-        start_min = start_cols[1].selectbox("", minutes_options, key=start_min_key, label_visibility="collapsed", index=minutes_options.index(st.session_state[start_min_key]))
-        start_ampm = start_cols[2].selectbox("", ampm_options, key=start_ampm_key, label_visibility="collapsed", index=ampm_options.index(st.session_state[start_ampm_key]))
+        start_hr = start_cols[0].selectbox("", hours_options, key=f"{emp}_{day}_start_hr", label_visibility="collapsed")
+        start_min = start_cols[1].selectbox("", minutes_options, key=f"{emp}_{day}_start_min", label_visibility="collapsed")
+        start_ampm = start_cols[2].selectbox("", ampm_options, key=f"{emp}_{day}_start_ampm", label_visibility="collapsed")
 
-        break_key = f"{emp}_{day}_break"
-        brk = cols[2].number_input("", 0.0, 5.0, step=0.5, key=break_key, label_visibility="collapsed", value=st.session_state[break_key])
+        brk = cols[2].number_input("", 0.0, 5.0, step=0.5, key=f"{emp}_{day}_break", label_visibility="collapsed")
 
         end_cols = cols[3].columns([1, 1, 1], gap="small")
-        end_hr_key = f"{emp}_{day}_end_hr"
-        end_min_key = f"{emp}_{day}_end_min"
-        end_ampm_key = f"{emp}_{day}_end_ampm"
-        end_hr = end_cols[0].selectbox("", hours_options, key=end_hr_key, label_visibility="collapsed", index=hours_options.index(st.session_state[end_hr_key]))
-        end_min = end_cols[1].selectbox("", minutes_options, key=end_min_key, label_visibility="collapsed", index=minutes_options.index(st.session_state[end_min_key]))
-        end_ampm = end_cols[2].selectbox("", ampm_options, key=end_ampm_key, label_visibility="collapsed", index=ampm_options.index(st.session_state[end_ampm_key]))
+        end_hr = end_cols[0].selectbox("", hours_options, key=f"{emp}_{day}_end_hr", label_visibility="collapsed")
+        end_min = end_cols[1].selectbox("", minutes_options, key=f"{emp}_{day}_end_min", label_visibility="collapsed")
+        end_ampm = end_cols[2].selectbox("", ampm_options, key=f"{emp}_{day}_end_ampm", label_visibility="collapsed")
 
-        start_time_obj = to_time_obj(start_hr, start_min, start_ampm)
-        end_time_obj = to_time_obj(end_hr, end_min, end_ampm)
-        worked_hours = calculate_hours(start_time_obj, end_time_obj, brk)
+        worked_hours = calculate_hours(to_time_obj(start_hr, start_min, start_ampm), to_time_obj(end_hr, end_min, end_ampm), brk)
         work_hours[emp][day] = worked_hours
 
-        cols[4].markdown(f'<div class="hours-display">{worked_hours:.2f} hrs</div>', unsafe_allow_html=True)
+        with cols[4]:
+            st.markdown(f'<div class="hours-display">{worked_hours:.2f} hrs</div>', unsafe_allow_html=True)
+            if st.button("💾 Enter", key=f"{emp}_{day}_enter"):
+                save_day(emp, day)
 
     st.markdown('</div>', unsafe_allow_html=True)
 
-if st.button("💾 Save Working Hours"):
-    save_list = []
-    for emp in employees:
-        for day in days:
-            save_list.append({
-                "Employee": emp,
-                "Day": day,
-                "Start_hr": st.session_state[f"{emp}_{day}_start_hr"],
-                "Start_min": st.session_state[f"{emp}_{day}_start_min"],
-                "Start_ampm": st.session_state[f"{emp}_{day}_start_ampm"],
-                "Break": st.session_state[f"{emp}_{day}_break"],
-                "End_hr": st.session_state[f"{emp}_{day}_end_hr"],
-                "End_min": st.session_state[f"{emp}_{day}_end_min"],
-                "End_ampm": st.session_state[f"{emp}_{day}_end_ampm"],
-            })
-    save_data_to_csv(save_list)
-    st.success("💾 Working hours saved successfully!")
-
+# Weekly Summary
 st.markdown("<hr>")
-st.markdown("## 📊 Weekly Summary Table (Saved Data)")
+st.markdown("## 📊 Weekly Summary Table")
 
-if saved_df.empty:
-    st.info("No saved data yet. Enter working hours and click Save.")
+df = st.session_state["saved_df"]
+if df.empty:
+    st.info("No saved data yet.")
 else:
     summary_data = []
     for emp in employees:
         row = {"Employee": emp}
         total_hours = 0
         for day in days:
-            match = saved_df[
-                (saved_df["Employee"] == emp) &
-                (saved_df["Day"] == day)
-            ]
+            match = df[(df["Employee"] == emp) & (df["Day"] == day)]
             if not match.empty:
-                start_hr = int(match.iloc[0]["Start_hr"])
-                start_min = int(match.iloc[0]["Start_min"])
-                start_ampm = match.iloc[0]["Start_ampm"]
-                end_hr = int(match.iloc[0]["End_hr"])
-                end_min = int(match.iloc[0]["End_min"])
-                end_ampm = match.iloc[0]["End_ampm"]
-                brk = float(match.iloc[0]["Break"])
-
-                start_time_obj = to_time_obj(start_hr, start_min, start_ampm)
-                end_time_obj = to_time_obj(end_hr, end_min, end_ampm)
-                hrs = calculate_hours(start_time_obj, end_time_obj, brk)
+                hrs = calculate_hours(
+                    to_time_obj(int(match.iloc[0]["Start_hr"]), int(match.iloc[0]["Start_min"]), match.iloc[0]["Start_ampm"]),
+                    to_time_obj(int(match.iloc[0]["End_hr"]), int(match.iloc[0]["End_min"]), match.iloc[0]["End_ampm"]),
+                    float(match.iloc[0]["Break"])
+                )
             else:
                 hrs = 0
             row[day] = f"{hrs:.2f} hrs"
@@ -306,29 +314,4 @@ else:
         summary_data.append(row)
 
     summary_df = pd.DataFrame(summary_data)
-
-    styled_df = (
-        summary_df.style
-        .set_properties(**{
-            'background-color': '#f0f8ff',
-            'color': 'black',
-            'border-color': 'black',
-            'text-align': 'center',
-            'font-family': 'Arial, sans-serif',
-            'font-size': '14px',
-            'padding': '8px'
-        })
-        .set_table_styles([
-            {'selector': 'th', 'props': [
-                ('background-color', '#2E8B57'),
-                ('color', 'white'),
-                ('font-weight', 'bold'),
-                ('font-size', '16px'),
-                ('padding', '12px')
-            ]},
-            {'selector': 'tbody tr:hover', 'props': [('background-color', '#d1e7dd')]}
-        ])
-        .format("{0}")
-    )
-
-    st.dataframe(styled_df, use_container_width=True)
+    st.dataframe(summary_df, use_container_width=True)
